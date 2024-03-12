@@ -22,11 +22,11 @@ ARG OPENSSL_VERSION=1.1.1m
 #
 # We're stuck on PostgreSQL 11 until we figure out
 # https://github.com/emk/rust-musl-builder/issues.
-ARG CARGO_ABOUT_VERSION=0.4.4
-ARG CARGO_DENY_VERSION=0.11.1
-ARG ZLIB_VERSION=1.3
-ARG POSTGRESQL_VERSION=11.11
-ARG PROTOBUF_VERSION=21.1
+ARG CARGO_ABOUT_VERSION=0.6.0
+ARG CARGO_DENY_VERSION=0.14.16
+ARG ZLIB_VERSION=1.3.1
+ARG POSTGRESQL_VERSION=14.11
+ARG PROTOBUF_VERSION=25.2
 
 # Make sure we have basic dev tools for building C libraries.  Our goal here is
 # to support the musl-libc builds and Cargo builds needed for a large selection
