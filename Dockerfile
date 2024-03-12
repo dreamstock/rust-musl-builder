@@ -9,7 +9,7 @@ ARG TOOLCHAIN=stable
 # - https://www.openssl.org/source/
 #
 # ALSO UPDATE hooks/build!
-ARG OPENSSL_VERSION=1.1.1m
+ARG OPENSSL_VERSION=3.2.1
 
 # Versions for other dependencies. Here are the places to check for new
 # releases:
@@ -89,9 +89,7 @@ RUN echo "Building OpenSSL" && \
     ln -s /usr/include/x86_64-linux-gnu/asm /usr/local/musl/include/asm && \
     ln -s /usr/include/asm-generic /usr/local/musl/include/asm-generic && \
     cd /tmp && \
-    short_version="$(echo "$OPENSSL_VERSION" | sed s'/[a-z]$//' )" && \
-    curl -fLO "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" || \
-    curl -fLO "https://www.openssl.org/source/old/$short_version/openssl-$OPENSSL_VERSION.tar.gz" && \
+    curl -fLO "https://github.com/openssl/openssl/releases/download/openssl-$OPENSSL_VERSION/openssl-$OPENSSL_VERSION.tar.gz" && \
     tar xvzf "openssl-$OPENSSL_VERSION.tar.gz" && cd "openssl-$OPENSSL_VERSION" && \
     env CC=musl-gcc ./Configure no-shared no-zlib -fPIC --prefix=/usr/local/musl -DOPENSSL_NO_SECURE_MEMORY linux-x86_64 && \
     env C_INCLUDE_PATH=/usr/local/musl/include/ make depend && \
