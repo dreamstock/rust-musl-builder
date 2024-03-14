@@ -1,9 +1,6 @@
 # Use Ubuntu 18.04 LTS as our base image.
 FROM ubuntu:22.04
 
-# The Rust toolchain to use when building our image.  Set by `hooks/build`.
-ARG TOOLCHAIN=stable
-
 # The OpenSSL version to use. Here is the place to check for new releases:
 #
 # - https://www.openssl.org/source/
@@ -133,6 +130,9 @@ RUN git config --global credential.https://github.com.helper ghtoken
 ENV RUSTUP_HOME=/opt/rust/rustup \
     PATH=/home/rust/.cargo/bin:/opt/rust/cargo/bin:/usr/local/musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     CARGO_HOME=/opt/rust/cargo
+
+# The Rust toolchain to use when building our image.  Set by `hooks/build`.
+ARG TOOLCHAIN=stable
 
 # Install our Rust toolchain and the `musl` target.  We patch the
 # command-line we pass to the installer so that it won't attempt to
