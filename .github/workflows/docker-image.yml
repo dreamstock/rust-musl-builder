@@ -34,6 +34,8 @@ jobs:
           push: false
           build-args: |
             TOOLCHAIN=${{ env.RUST_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build container image
         uses: docker/build-push-action@v5
@@ -44,3 +46,5 @@ jobs:
             ghcr.io/${{ github.repository }}/rust-musl-builder:${{ env.RUST_VERSION }}-llvm-cov
           build-args: |
             TOOLCHAIN=${{ env.RUST_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
