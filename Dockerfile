@@ -79,7 +79,7 @@ RUN ln -s "/usr/bin/g++" "/usr/bin/musl-g++"
 # the popular Rust `hyper` crate.
 #
 # We point /usr/local/musl/include/linux at some Linux kernel headers (not
-# necessarily the right ones) in an effort to compile OpenSSL 1.1's "engine"
+# necessarily the right ones) in an effort to compile OpenSSL 3.2's "engine"
 # component. It's possible that this will cause bizarre and terrible things to
 # happen. There may be "sanitized" header
 RUN echo "Building OpenSSL" && \
@@ -110,7 +110,7 @@ RUN echo "Building libpq" && \
     cd /tmp && \
     curl -fLO "https://ftp.postgresql.org/pub/source/v$POSTGRESQL_VERSION/postgresql-$POSTGRESQL_VERSION.tar.gz" && \
     tar xzf "postgresql-$POSTGRESQL_VERSION.tar.gz" && cd "postgresql-$POSTGRESQL_VERSION" && \
-    CC=musl-gcc CPPFLAGS=-I/usr/local/musl/include LDFLAGS=-L/usr/local/musl/lib ./configure --with-openssl --without-readline --prefix=/usr/local/musl && \
+    CC=musl-gcc CPPFLAGS=-I/usr/local/musl/include LDFLAGS="-L/usr/local/musl/lib -L/usr/local/musl/lib64" ./configure --with-openssl --without-readline --prefix=/usr/local/musl && \
     cd src/interfaces/libpq && make all-static-lib && make install-lib-static && \
     cd ../../bin/pg_config && make && make install && \
     rm -r /tmp/*
@@ -131,7 +131,8 @@ RUN git config --global credential.https://github.com.helper ghtoken
 # We use the instructions at https://github.com/rust-lang/rustup/issues/2383
 # to install the rustup toolchain as root.
 ENV RUSTUP_HOME=/opt/rust/rustup \
-    PATH=/home/rust/.cargo/bin:/opt/rust/cargo/bin:/usr/local/musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    PATH=/home/rust/.cargo/bin:/opt/rust/cargo/bin:/usr/local/musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    CARGO_HOME=/opt/rust/cargo
 
 # Install our Rust toolchain and the `musl` target.  We patch the
 # command-line we pass to the installer so that it won't attempt to
@@ -139,15 +140,10 @@ ENV RUSTUP_HOME=/opt/rust/rustup \
 # `--target` to musl so that our users don't need to keep overriding it
 # manually.
 RUN curl https://sh.rustup.rs -sSf | \
-    env CARGO_HOME=/opt/rust/cargo \
     sh -s -- -y --default-toolchain $TOOLCHAIN --profile minimal --no-modify-path && \
-    env CARGO_HOME=/opt/rust/cargo \
     rustup component add rustfmt && \
-    env CARGO_HOME=/opt/rust/cargo \
     rustup component add clippy && \
-    env CARGO_HOME=/opt/rust/cargo \
     rustup target add x86_64-unknown-linux-musl && \
-    env CARGO_HOME=/opt/rust/cargo \
     rustup component add llvm-tools-preview
 ADD cargo-config.toml /opt/rust/cargo/config
 
@@ -167,9 +163,9 @@ ENV X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR=/usr/local/musl/ \
 #
 # We include cargo-audit for compatibility with earlier versions of this image,
 # but cargo-deny provides a superset of cargo-audit's features.
-RUN env CARGO_HOME=/opt/rust/cargo cargo install -f cargo-audit && \
-    env CARGO_HOME=/opt/rust/cargo cargo install -f cargo-deb && \
-    env CARGO_HOME=/opt/rust/cargo cargo install -f cargo-llvm-cov && \
+RUN cargo install -f cargo-audit && \
+    cargo install -f cargo-deb && \
+    cargo install -f cargo-llvm-cov && \
     rm -rf /opt/rust/cargo/registry/
 
 # Allow sudo without a password.
