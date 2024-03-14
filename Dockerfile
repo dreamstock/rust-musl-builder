@@ -53,6 +53,8 @@ RUN buildDeps='unzip'; \
     pkgconf \
     sudo \
     xutils-dev \
+    flex \
+    bison \
     && \
     useradd rust --user-group --create-home --shell /bin/bash --groups sudo && \
     curl -fLO https://github.com/EmbarkStudios/cargo-about/releases/download/$CARGO_ABOUT_VERSION/cargo-about-$CARGO_ABOUT_VERSION-x86_64-unknown-linux-musl.tar.gz && \
@@ -107,9 +109,27 @@ RUN echo "Building libpq" && \
     cd /tmp && \
     curl -fLO "https://ftp.postgresql.org/pub/source/v$POSTGRESQL_VERSION/postgresql-$POSTGRESQL_VERSION.tar.gz" && \
     tar xzf "postgresql-$POSTGRESQL_VERSION.tar.gz" && cd "postgresql-$POSTGRESQL_VERSION" && \
-    CC=musl-gcc CPPFLAGS=-I/usr/local/musl/include LDFLAGS="-L/usr/local/musl/lib -L/usr/local/musl/lib64" ./configure --with-openssl --without-readline --prefix=/usr/local/musl && \
+    CC="musl-gcc -fPIE -pie" CPPFLAGS="-I/usr/local/musl/include -I/tmp/postgresql-$POSTGRESQL_VERSION/src/include" LDFLAGS="-L/usr/local/musl/lib -L/usr/local/musl/lib64" ./configure --with-openssl --without-readline --with-pgport=5432 --prefix=/usr/local/musl --host=x86_64-unknown-linux-musl && \
     cd src/interfaces/libpq && make all-static-lib && make install-lib-static && \
     cd ../../bin/pg_config && make && make install && \
+    cd "/tmp/postgresql-$POSTGRESQL_VERSION/src" && \
+    make -C common && \
+    make -C backend && \
+    make -C interfaces/libpq && \
+    make -C interfaces/libpq install-strip && \
+    make -C include && \
+    make -C include install-strip && \
+    make -C bin/pg_config && \
+    make -C bin/pg_config install-strip && \
+    mkdir libpq-tmp && \
+    cd libpq-tmp && \
+    ar -x ../interfaces/libpq/libpq.a && \
+    ar -x ../common/libpgcommon.a && \
+    ar -x ../port/libpgport.a && \
+    rm -rf /usr/local/musl/lib/libpq.a && \
+    ar -qs /usr/local/musl/lib/libpq.a ./*.o && \
+    strip -x /usr/local/musl/lib/libpq.a && \
+    cd /tmp && \
     rm -r /tmp/*
 
 # (Please feel free to submit pull requests for musl-libc builds of other C
@@ -150,7 +170,11 @@ ADD cargo-config.toml /opt/rust/cargo/config
 # Set up our environment variables so that we cross-compile using musl-libc by
 # default.
 ENV X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_DIR=/usr/local/musl/ \
+    X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_INCLUDE_DIR=/usr/local/musl/include/ \
+    X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_LIB_DIR=/usr/local/musl/lib64/ \
     X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_STATIC=1 \
+    DEP_OPENSSL_INCLUDE=/usr/local/musl/include/ \
+    OPENSSL_STATIC=1 \
     PQ_LIB_STATIC_X86_64_UNKNOWN_LINUX_MUSL=1 \
     PG_CONFIG_X86_64_UNKNOWN_LINUX_GNU=/usr/bin/pg_config \
     PKG_CONFIG_ALLOW_CROSS=true \
