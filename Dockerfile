@@ -200,7 +200,7 @@ RUN chown -R rust:rust /opt/rust
 # using this image if you need to do so.
 USER rust
 RUN mkdir -p /home/rust/libs /home/rust/src /home/rust/.cargo && \
-    ln -s /opt/rust/cargo/config /home/rust/.cargo/config && \
+    ln -s /opt/rust/cargo/config.toml /home/rust/.cargo/config.toml && \
     git config --global credential.https://github.com.helper ghtoken
 
 # Expect our source code to live in /home/rust/src.  We'll run the build as
