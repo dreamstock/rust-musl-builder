@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 # The OpenSSL version to use. Here is the place to check for new releases:
 #
@@ -138,7 +138,7 @@ RUN echo "Building libpq" && \
 # Install a `git credentials` helper for using GH_USER and GH_TOKEN to access
 # private repositories if desired. We make sure this is configured for root,
 # here, and for the `rust` user below.
-ADD git-credential-ghtoken /usr/local/bin/ghtoken
+COPY git-credential-ghtoken /usr/local/bin/ghtoken
 RUN git config --global credential.https://github.com.helper ghtoken
 
 # Set up our path with all our binary directories, including those for the
@@ -164,7 +164,7 @@ RUN curl https://sh.rustup.rs -sSf | \
     rustup component add clippy && \
     rustup target add x86_64-unknown-linux-musl && \
     rustup component add llvm-tools-preview
-ADD cargo-config.toml /opt/rust/cargo/config
+COPY cargo-config.toml /opt/rust/cargo/config.toml
 
 # Set up our environment variables so that we cross-compile using musl-libc by
 # default.
@@ -188,8 +188,10 @@ RUN cargo install -f cargo-audit && \
     rm -rf /opt/rust/cargo/registry/
 
 # Allow sudo without a password.
-ADD sudoers /etc/sudoers.d/nopasswd && \
-    chmod 440 /etc/sudoers.d/nopasswd
+COPY --chmod=440 sudoers /etc/sudoers.d/nopasswd
+
+# change permissions for rust directory
+RUN chown -R rust:rust /opt/rust
 
 # Run all further code as user `rust`, create our working directories, install
 # our config file, and set up our credential helper.

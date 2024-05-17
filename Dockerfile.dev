@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 # The OpenSSL version to use. Here is the place to check for new releases:
 #
@@ -54,8 +54,9 @@ RUN buildDeps='unzip'; \
     xutils-dev \
     flex \
     bison \
+    zsh \
     && \
-    useradd rust --user-group --create-home --shell /bin/bash --groups sudo && \
+    useradd rust --user-group --create-home --shell /usr/bin/zsh --groups sudo && \
     curl -fLO https://github.com/EmbarkStudios/cargo-about/releases/download/$CARGO_ABOUT_VERSION/cargo-about-$CARGO_ABOUT_VERSION-x86_64-unknown-linux-musl.tar.gz && \
     tar xf cargo-about-$CARGO_ABOUT_VERSION-x86_64-unknown-linux-musl.tar.gz && \
     mv cargo-about-$CARGO_ABOUT_VERSION-x86_64-unknown-linux-musl/cargo-about /usr/local/bin/ && \
@@ -138,7 +139,7 @@ RUN echo "Building libpq" && \
 # Install a `git credentials` helper for using GH_USER and GH_TOKEN to access
 # private repositories if desired. We make sure this is configured for root,
 # here, and for the `rust` user below.
-ADD git-credential-ghtoken /usr/local/bin/ghtoken
+COPY git-credential-ghtoken /usr/local/bin/ghtoken
 RUN git config --global credential.https://github.com.helper ghtoken
 
 # Set up our path with all our binary directories, including those for the
@@ -164,7 +165,7 @@ RUN curl https://sh.rustup.rs -sSf | \
     rustup component add clippy && \
     rustup target add x86_64-unknown-linux-musl && \
     rustup component add llvm-tools-preview
-ADD cargo-config.toml /opt/rust/cargo/config
+COPY cargo-config.toml /opt/rust/cargo/config.toml
 
 # Set up our environment variables so that we cross-compile using musl-libc by
 # default.
@@ -188,9 +189,7 @@ RUN cargo install -f cargo-audit && \
     rm -rf /opt/rust/cargo/registry/
 
 # Allow sudo without a password.
-ADD sudoers /etc/sudoers.d/nopasswd && \
-    chmod 440 /etc/sudoers.d/nopasswd
-
+COPY --chmod=440 sudoers /etc/sudoers.d/nopasswd
 
 # Install the `docker` CLI for running Docker images from within our Docker
 RUN apt-get update && \
@@ -209,12 +208,14 @@ RUN apt-get update && \
     usermod -aG docker rust && \
     echo "sudo service docker start" >> /home/rust/.bashrc
 
-# install bash completion
-RUN apt-get update && \
-    apt-get install -y bash-completion && \
-    echo ". /etc/bash_completion" >> /home/rust/.bashrc && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# copy zsh config
+COPY --chown=rust:rust zshrc.zsh /home/rust/.zshrc
+
+# install starship prompt
+RUN curl -fsSL https://starship.rs/install.sh | sh -s -- -y
+
+# change permissions for rust directory
+RUN chown -R rust:rust /opt/rust
 
 # Run all further code as user `rust`, create our working directories, install
 # our config file, and set up our credential helper.
@@ -229,3 +230,11 @@ RUN mkdir -p /home/rust/libs /home/rust/src /home/rust/.cargo && \
 # Expect our source code to live in /home/rust/src.  We'll run the build as
 # user `rust`, which will be uid 1000, gid 1000 outside the container.
 WORKDIR /home/rust/src
+
+# add default lang/locale/timezone
+# MALLOC_CONF: compile boost. ref: https://kobzol.github.io/rust/rustc/2023/10/21/make-rust-compiler-5percent-faster.html
+ENV MALLOC_CONF="thp:always,metadata_thp:always" \
+    LANG="en_US.UTF-8" \
+    LC_ALL="en_US.UTF-8" \
+    TZ="UTC" \
+    TERM="xterm-256color"
