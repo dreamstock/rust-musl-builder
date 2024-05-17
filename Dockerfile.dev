@@ -168,7 +168,7 @@ RUN curl https://sh.rustup.rs -sSf | \
     rustup target add x86_64-unknown-linux-musl && \
     rustup target add x86_64-unknown-linux-gnu && \
     rustup component add llvm-tools-preview
-COPY cargo-config-dev.toml /opt/rust/cargo/config.toml
+COPY cargo-config.toml /opt/rust/cargo/config.toml
 
 # Set up our environment variables so that we cross-compile using musl-libc by
 # default.
@@ -226,6 +226,8 @@ RUN curl -sL https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VER
   tar -C /usr/local/bin --strip-components=1 --wildcards '*/sccache' -xzf -
 
 ENV RUSTC_WRAPPER="/usr/local/bin/sccache"
+
+COPY cargo-config-dev.toml /opt/rust/cargo/config.toml
 
 # Run all further code as user `rust`, create our working directories, install
 # our config file, and set up our credential helper.
