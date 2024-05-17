@@ -1,0 +1,16 @@
+[build]
+# Target musl-libc by default when running Cargo.
+target = "x86_64-unknown-linux-musl"
+
+[target.armv7-unknown-linux-musleabihf]
+linker = "arm-linux-gnueabihf-gcc"
+rustflags = ["-C", "link-arg=-fuse-ld=/path/to/mold"]
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-fuse-ld=/path/to/mold"]
+
+[target.x86_64-unknown-linux-musl]
+rustflags = ["-C", "link-arg=-fuse-ld=/path/to/mold"]
+
+[net]
+git-fetch-with-cli = true

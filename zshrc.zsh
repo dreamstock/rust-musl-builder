@@ -38,3 +38,5 @@ export TIMEFMT=$'\n\n========================\nProgram : %J\nCPU     : %P\nuser 
 eval "$(starship init zsh)"
 # enable docker
 sudo service docker start
+# add watch command
+alias watch='watch '

@@ -190,9 +190,6 @@ RUN cargo install -f cargo-audit && \
 # Allow sudo without a password.
 COPY --chmod=440 sudoers /etc/sudoers.d/nopasswd
 
-# change permissions for rust directory
-RUN chown -R rust:rust /opt/rust
-
 # Run all further code as user `rust`, create our working directories, install
 # our config file, and set up our credential helper.
 #
