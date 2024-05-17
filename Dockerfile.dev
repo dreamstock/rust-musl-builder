@@ -191,6 +191,31 @@ RUN cargo install -f cargo-audit && \
 ADD sudoers /etc/sudoers.d/nopasswd && \
     chmod 440 /etc/sudoers.d/nopasswd
 
+
+# Install the `docker` CLI for running Docker images from within our Docker
+RUN apt-get update && \
+    apt-get install -y ca-certificates curl && \
+    install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && \
+    chmod a+r /etc/apt/keyrings/docker.asc && \
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y docker-ce docker-ce-cli containerd.io && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    usermod -aG docker rust && \
+    echo "sudo service docker start" >> /home/rust/.bashrc
+
+# install bash completion
+RUN apt-get update && \
+    apt-get install -y bash-completion && \
+    echo ". /etc/bash_completion" >> /home/rust/.bashrc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Run all further code as user `rust`, create our working directories, install
 # our config file, and set up our credential helper.
 #
